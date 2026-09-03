@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Launcher.Settings
 {
     /// <summary>
@@ -16,5 +18,7 @@ namespace Launcher.Settings
         public int? SettingsWindowY { get; set; }
         public int? SettingsWindowWidth { get; set; }
         public int? SettingsWindowHeight { get; set; }
+
+        public List<LaunchItem> LaunchItems { get; set; } = new();
     }
 }

@@ -1,9 +1,13 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Launcher.Interop;
 using Launcher.Settings;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Windows.Graphics;
@@ -33,6 +37,8 @@ namespace Launcher
         private NativeMethods.NOTIFYICONDATA _trayIconData;
         private IntPtr _trayIconHandle;
         private SettingsWindow? _settingsWindow;
+        private readonly ObservableCollection<LaunchItemView> _launchItems = new();
+        private readonly Dictionary<string, BitmapImage> _iconCache = new();
 
         public MainWindow()
         {
@@ -48,6 +54,9 @@ namespace Launcher
             ConfigureWindowChrome();
             RegisterGlobalHotKey();
             InitializeTrayIcon();
+
+            AppsGridView.ItemsSource = _launchItems;
+            LoadLaunchItems();
 
             Activated += OnActivated;
         }
@@ -147,6 +156,63 @@ namespace Launcher
 
         private static int ClampPosition(int value, int min, int max) => max <= min ? min : Math.Clamp(value, min, max);
 
+        private void LoadLaunchItems()
+        {
+            var settings = SettingsService.Load();
+            _launchItems.Clear();
+
+            foreach (var item in settings.LaunchItems)
+            {
+                var view = new LaunchItemView { Name = item.Name, Path = item.Path };
+                if (_iconCache.TryGetValue(item.Path, out var cachedIcon))
+                {
+                    view.IconSource = cachedIcon;
+                }
+                else
+                {
+                    _ = LoadIconAsync(item.Path, view);
+                }
+
+                _launchItems.Add(view);
+            }
+
+            EmptyStateText.Visibility = _launchItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async System.Threading.Tasks.Task LoadIconAsync(string path, LaunchItemView view)
+        {
+            var icon = await AppIconLoader.LoadIconAsync(path);
+            if (icon is null)
+            {
+                return;
+            }
+
+            _iconCache[path] = icon;
+            view.IconSource = icon;
+        }
+
+        private void AppsGridView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is LaunchItemView item)
+            {
+                LaunchApp(item.Path);
+            }
+        }
+
+        private void LaunchApp(string path)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to launch '{path}': {ex.Message}");
+            }
+
+            _appWindow.Hide();
+        }
+
         private void ShowTrayContextMenu()
         {
             var hMenu = NativeMethods.CreatePopupMenu();
@@ -200,7 +266,11 @@ namespace Launcher
             }
 
             _settingsWindow = new SettingsWindow();
-            _settingsWindow.SettingsSaved += () => RegisterGlobalHotKey(SettingsService.Load());
+            _settingsWindow.SettingsSaved += () =>
+            {
+                RegisterGlobalHotKey(SettingsService.Load());
+                LoadLaunchItems();
+            };
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
             _settingsWindow.Activate();
         }

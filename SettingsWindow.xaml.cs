@@ -3,7 +3,9 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Launcher.Settings;
 using System;
+using System.Collections.ObjectModel;
 using Windows.Graphics;
+using Windows.Storage.Pickers;
 using WinRT.Interop;
 
 namespace Launcher
@@ -14,9 +16,10 @@ namespace Launcher
     public sealed partial class SettingsWindow : Window
     {
         private const int DefaultWidth = 420;
-        private const int DefaultHeight = 380;
+        private const int DefaultHeight = 480;
 
         private readonly AppWindow _appWindow;
+        private readonly ObservableCollection<LaunchItem> _launchApps = new();
 
         public event Action? SettingsSaved;
 
@@ -31,6 +34,7 @@ namespace Launcher
             var settings = SettingsService.Load();
             ApplyWindowGeometry(settings);
 
+            AppsListView.ItemsSource = _launchApps;
             PopulateKeyOptions();
             LoadSettings(settings);
 
@@ -75,6 +79,40 @@ namespace Launcher
             WinCheckBox.IsChecked = settings.HotKeyModifierWin;
             KeyComboBox.SelectedItem = settings.HotKeyKey.ToString();
             StartupCheckBox.IsChecked = StartupManager.IsEnabled();
+
+            _launchApps.Clear();
+            foreach (var item in settings.LaunchItems)
+            {
+                _launchApps.Add(item);
+            }
+        }
+
+        private async void AddAppButton_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileOpenPicker();
+            var hWnd = WindowNative.GetWindowHandle(this);
+            InitializeWithWindow.Initialize(picker, hWnd);
+
+            picker.SuggestedStartLocation = PickerLocationId.ComputerFolder;
+            picker.FileTypeFilter.Add(".exe");
+            picker.FileTypeFilter.Add(".lnk");
+
+            var file = await picker.PickSingleFileAsync();
+            if (file is null)
+            {
+                return;
+            }
+
+            var name = System.IO.Path.GetFileNameWithoutExtension(file.Name);
+            _launchApps.Add(new LaunchItem { Name = name, Path = file.Path });
+        }
+
+        private void RemoveAppButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Microsoft.UI.Xaml.Controls.Button { Tag: LaunchItem item })
+            {
+                _launchApps.Remove(item);
+            }
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -97,6 +135,7 @@ namespace Launcher
             settings.HotKeyModifierWin = WinCheckBox.IsChecked ?? false;
             settings.HotKeyKey = keyText[0];
             settings.StartWithWindows = StartupCheckBox.IsChecked ?? false;
+            settings.LaunchItems = new System.Collections.Generic.List<LaunchItem>(_launchApps);
 
             SettingsService.Save(settings);
             StartupManager.SetEnabled(settings.StartWithWindows);

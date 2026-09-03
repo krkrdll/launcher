@@ -14,6 +14,38 @@
     </Window.SystemBackdrop>
 
     <Grid>
+        <GridView
+            x:Name="AppsGridView"
+            Padding="8"
+            SelectionMode="None"
+            IsItemClickEnabled="True"
+            ItemClick="AppsGridView_ItemClick">
+            <GridView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Width="72" Margin="4" HorizontalAlignment="Center" ToolTipService.ToolTip="{Binding Name}">
+                        <Image Source="{Binding IconSource}" Width="32" Height="32" HorizontalAlignment="Center" Stretch="Uniform" />
+                        <TextBlock
+                            Text="{Binding Name}"
+                            HorizontalAlignment="Center"
+                            TextAlignment="Center"
+                            TextTrimming="CharacterEllipsis"
+                            MaxLines="1"
+                            FontSize="11"
+                            Margin="0,4,0,0" />
+                    </StackPanel>
+                </DataTemplate>
+            </GridView.ItemTemplate>
+        </GridView>
 
+        <TextBlock
+            x:Name="EmptyStateText"
+            Text="設定画面からアプリを登録してください"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Opacity="0.6"
+            TextWrapping="Wrap"
+            TextAlignment="Center"
+            Margin="24"
+            Visibility="Collapsed" />
     </Grid>
 </Window>

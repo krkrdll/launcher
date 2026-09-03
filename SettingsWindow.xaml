@@ -51,6 +51,50 @@
             <CheckBox x:Name="StartupCheckBox" Content="Windows起動時に自動的に起動する" />
         </StackPanel>
 
+        <Grid Grid.Row="3" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="登録アプリケーション" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                <Button Grid.Column="1" x:Name="AddAppButton" Content="追加" Click="AddAppButton_Click" />
+            </Grid>
+
+            <ListView Grid.Row="1" x:Name="AppsListView" SelectionMode="None">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="0,4" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2">
+                                <TextBox Text="{Binding Name, Mode=TwoWay}" PlaceholderText="表示名" />
+                                <TextBlock
+                                    Text="{Binding Path}"
+                                    Opacity="0.6"
+                                    FontSize="11"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTipService.ToolTip="{Binding Path}" />
+                            </StackPanel>
+                            <Button
+                                Grid.Column="1"
+                                Content="削除"
+                                VerticalAlignment="Center"
+                                Click="RemoveAppButton_Click"
+                                Tag="{Binding}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
             <Button x:Name="CancelButton" Content="キャンセル" Click="CancelButton_Click" />
             <Button x:Name="SaveButton" Content="保存" Style="{StaticResource AccentButtonStyle}" Click="SaveButton_Click" />
