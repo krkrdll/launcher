@@ -134,6 +134,18 @@ namespace Launcher
             return icon != IntPtr.Zero ? icon : NativeMethods.LoadIcon(IntPtr.Zero, NativeMethods.IDI_APPLICATION);
         }
 
+        private void ToggleAtCursorPosition()
+        {
+            if (_appWindow.IsVisible)
+            {
+                _appWindow.Hide();
+            }
+            else
+            {
+                ShowAtCursorPosition();
+            }
+        }
+
         private void ShowAtCursorPosition()
         {
             if (!NativeMethods.GetCursorPos(out var cursor))
@@ -302,7 +314,7 @@ namespace Launcher
                 case NativeMethods.WM_HOTKEY:
                     if (wParam.ToInt32() == HotKeyId)
                     {
-                        DispatcherQueue.TryEnqueue(ShowAtCursorPosition);
+                        DispatcherQueue.TryEnqueue(ToggleAtCursorPosition);
                         return IntPtr.Zero;
                     }
                     break;
