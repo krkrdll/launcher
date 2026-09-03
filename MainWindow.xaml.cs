@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Launcher.Interop;
 using Launcher.Settings;
@@ -9,8 +10,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Windows.Graphics;
+using Windows.System;
 using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -30,6 +33,11 @@ namespace Launcher
         private const int MenuIdSettings = 2;
         private const int MenuIdExit = 3;
 
+        private const int WindowWidth = 400;
+        private const int CollapsedHeight = 64;
+        private const int ExpandedHeight = 230;
+        private const int SuggestionsHeight = 200;
+
         private readonly IntPtr _hWnd;
         private readonly AppWindow _appWindow;
         private readonly NativeMethods.WndProcDelegate _wndProcDelegate;
@@ -39,6 +47,9 @@ namespace Launcher
         private SettingsWindow? _settingsWindow;
         private readonly ObservableCollection<LaunchItemView> _launchItems = new();
         private readonly Dictionary<string, BitmapImage> _iconCache = new();
+        private KeyboardAccelerator? _expandAccelerator;
+        private bool _isExpanded;
+        private bool _isShowingSuggestions;
 
         public MainWindow()
         {
@@ -53,6 +64,8 @@ namespace Launcher
 
             ConfigureWindowChrome();
             RegisterGlobalHotKey();
+            RegisterExpandShortcut();
+            RegisterSettingsShortcut();
             InitializeTrayIcon();
 
             AppsGridView.ItemsSource = _launchItems;
@@ -63,7 +76,7 @@ namespace Launcher
 
         private void ConfigureWindowChrome()
         {
-            _appWindow.Resize(new SizeInt32(400, 200));
+            _appWindow.Resize(new SizeInt32(WindowWidth, CollapsedHeight));
 
             if (_appWindow.Presenter is OverlappedPresenter presenter)
             {
@@ -105,6 +118,91 @@ namespace Launcher
             {
                 Debug.WriteLine("Failed to register global hotkey. It may already be in use.");
             }
+        }
+
+        private void RegisterExpandShortcut() => RegisterExpandShortcut(SettingsService.Load());
+
+        private void RegisterExpandShortcut(AppSettings settings)
+        {
+            if (_expandAccelerator is not null)
+            {
+                RootGrid.KeyboardAccelerators.Remove(_expandAccelerator);
+            }
+
+            if (!Enum.TryParse<VirtualKey>(settings.ExpandKey.ToString(), out var virtualKey))
+            {
+                return;
+            }
+
+            var modifiers = VirtualKeyModifiers.None;
+            if (settings.ExpandModifierCtrl) modifiers |= VirtualKeyModifiers.Control;
+            if (settings.ExpandModifierShift) modifiers |= VirtualKeyModifiers.Shift;
+            if (settings.ExpandModifierAlt) modifiers |= VirtualKeyModifiers.Menu;
+            if (settings.ExpandModifierWin) modifiers |= VirtualKeyModifiers.Windows;
+
+            _expandAccelerator = new KeyboardAccelerator { Key = virtualKey, Modifiers = modifiers };
+            _expandAccelerator.Invoked += ExpandAccelerator_Invoked;
+            RootGrid.KeyboardAccelerators.Add(_expandAccelerator);
+        }
+
+        private void ExpandAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+            SetExpanded(!_isExpanded);
+        }
+
+        private void RegisterSettingsShortcut()
+        {
+            var accelerator = new KeyboardAccelerator { Key = VirtualKey.O, Modifiers = VirtualKeyModifiers.Control };
+            accelerator.Invoked += SettingsAccelerator_Invoked;
+            RootGrid.KeyboardAccelerators.Add(accelerator);
+        }
+
+        private void SettingsAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+            OpenSettingsWindow();
+        }
+
+        private void SetExpanded(bool expanded)
+        {
+            if (_isExpanded == expanded)
+            {
+                return;
+            }
+
+            _isExpanded = expanded;
+            UpdateContentVisibility();
+            ResizeToCurrentState();
+        }
+
+        private void UpdateContentVisibility()
+        {
+            ContentGrid.Visibility = _isExpanded && !_isShowingSuggestions ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private int CurrentContentHeight()
+        {
+            if (_isShowingSuggestions)
+            {
+                return CollapsedHeight + SuggestionsHeight;
+            }
+
+            return _isExpanded ? ExpandedHeight : CollapsedHeight;
+        }
+
+        private void ResizeToCurrentState()
+        {
+            var size = new SizeInt32(WindowWidth, CurrentContentHeight());
+            var displayArea = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Nearest);
+            var workArea = displayArea.WorkArea;
+            var position = _appWindow.Position;
+
+            _appWindow.Resize(size);
+
+            var x = ClampPosition(position.X, workArea.X, workArea.X + workArea.Width - size.Width);
+            var y = ClampPosition(position.Y, workArea.Y, workArea.Y + workArea.Height - size.Height);
+            _appWindow.Move(new PointInt32(x, y));
         }
 
         private void InitializeTrayIcon()
@@ -153,17 +251,27 @@ namespace Launcher
                 return;
             }
 
+            _isExpanded = false;
+            _isShowingSuggestions = false;
+            ContentGrid.Visibility = Visibility.Collapsed;
+            SuggestionsListView.Visibility = Visibility.Collapsed;
+            SuggestionsListView.ItemsSource = null;
+
             var point = new PointInt32(cursor.X, cursor.Y);
             var displayArea = DisplayArea.GetFromPoint(point, DisplayAreaFallback.Nearest);
             var workArea = displayArea.WorkArea;
-            var size = _appWindow.Size;
+            var size = new SizeInt32(WindowWidth, CollapsedHeight);
 
             var x = ClampPosition(cursor.X, workArea.X, workArea.X + workArea.Width - size.Width);
             var y = ClampPosition(cursor.Y, workArea.Y, workArea.Y + workArea.Height - size.Height);
 
+            _appWindow.Resize(size);
             _appWindow.Move(new PointInt32(x, y));
             _appWindow.Show();
             NativeMethods.SetForegroundWindow(_hWnd);
+
+            LaunchTextBox.Text = string.Empty;
+            LaunchTextBox.Focus(FocusState.Programmatic);
         }
 
         private static int ClampPosition(int value, int min, int max) => max <= min ? min : Math.Clamp(value, min, max);
@@ -209,6 +317,105 @@ namespace Launcher
             {
                 LaunchApp(item.Path);
             }
+        }
+
+        private void LaunchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var text = LaunchTextBox.Text;
+            if (string.IsNullOrEmpty(text))
+            {
+                SetSuggestions(null);
+                return;
+            }
+
+            var suggestions = _launchItems
+                .Where(item => item.Name.StartsWith(text, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            SetSuggestions(suggestions);
+        }
+
+        private void SetSuggestions(List<LaunchItemView>? suggestions)
+        {
+            var visible = suggestions is { Count: > 0 };
+
+            SuggestionsListView.ItemsSource = suggestions;
+            SuggestionsListView.SelectedIndex = -1;
+            SuggestionsListView.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+
+            if (_isShowingSuggestions == visible)
+            {
+                return;
+            }
+
+            _isShowingSuggestions = visible;
+            UpdateContentVisibility();
+            ResizeToCurrentState();
+        }
+
+        private void LaunchTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case VirtualKey.Down when _isShowingSuggestions:
+                    MoveSuggestionSelection(1);
+                    e.Handled = true;
+                    break;
+
+                case VirtualKey.Up when _isShowingSuggestions:
+                    MoveSuggestionSelection(-1);
+                    e.Handled = true;
+                    break;
+
+                case VirtualKey.Enter:
+                    LaunchHighlightedOrSingleSuggestion();
+                    break;
+            }
+        }
+
+        private void MoveSuggestionSelection(int delta)
+        {
+            var count = SuggestionsListView.Items.Count;
+            if (count == 0)
+            {
+                return;
+            }
+
+            var next = Math.Clamp(SuggestionsListView.SelectedIndex + delta, -1, count - 1);
+            SuggestionsListView.SelectedIndex = next;
+
+            if (next >= 0)
+            {
+                SuggestionsListView.ScrollIntoView(SuggestionsListView.SelectedItem);
+            }
+        }
+
+        private void LaunchHighlightedOrSingleSuggestion()
+        {
+            if (SuggestionsListView.SelectedItem is LaunchItemView selected)
+            {
+                LaunchSelection(selected);
+                return;
+            }
+
+            if (SuggestionsListView.ItemsSource is IReadOnlyCollection<LaunchItemView> { Count: 1 } suggestions)
+            {
+                LaunchSelection(suggestions.Single());
+            }
+        }
+
+        private void SuggestionsListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is LaunchItemView item)
+            {
+                LaunchSelection(item);
+            }
+        }
+
+        private void LaunchSelection(LaunchItemView item)
+        {
+            LaunchTextBox.Text = string.Empty;
+            LaunchApp(item.Path);
         }
 
         private void LaunchApp(string path)
@@ -280,7 +487,9 @@ namespace Launcher
             _settingsWindow = new SettingsWindow();
             _settingsWindow.SettingsSaved += () =>
             {
-                RegisterGlobalHotKey(SettingsService.Load());
+                var settings = SettingsService.Load();
+                RegisterGlobalHotKey(settings);
+                RegisterExpandShortcut(settings);
                 LoadLaunchItems();
             };
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;

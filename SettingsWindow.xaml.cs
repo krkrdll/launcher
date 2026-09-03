@@ -1,6 +1,7 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Launcher.Settings;
 using System;
 using System.Collections.ObjectModel;
@@ -16,7 +17,7 @@ namespace Launcher
     public sealed partial class SettingsWindow : Window
     {
         private const int DefaultWidth = 420;
-        private const int DefaultHeight = 480;
+        private const int DefaultHeight = 620;
 
         private readonly AppWindow _appWindow;
         private readonly ObservableCollection<LaunchItem> _launchApps = new();
@@ -35,7 +36,8 @@ namespace Launcher
             ApplyWindowGeometry(settings);
 
             AppsListView.ItemsSource = _launchApps;
-            PopulateKeyOptions();
+            PopulateKeyOptions(KeyComboBox);
+            PopulateKeyOptions(ExpandKeyComboBox);
             LoadSettings(settings);
 
             Closed += (_, _) => SaveWindowGeometry();
@@ -63,11 +65,11 @@ namespace Launcher
             SettingsService.Save(settings);
         }
 
-        private void PopulateKeyOptions()
+        private static void PopulateKeyOptions(ComboBox comboBox)
         {
             for (var key = 'A'; key <= 'Z'; key++)
             {
-                KeyComboBox.Items.Add(key.ToString());
+                comboBox.Items.Add(key.ToString());
             }
         }
 
@@ -79,6 +81,12 @@ namespace Launcher
             WinCheckBox.IsChecked = settings.HotKeyModifierWin;
             KeyComboBox.SelectedItem = settings.HotKeyKey.ToString();
             StartupCheckBox.IsChecked = StartupManager.IsEnabled();
+
+            ExpandCtrlCheckBox.IsChecked = settings.ExpandModifierCtrl;
+            ExpandShiftCheckBox.IsChecked = settings.ExpandModifierShift;
+            ExpandAltCheckBox.IsChecked = settings.ExpandModifierAlt;
+            ExpandWinCheckBox.IsChecked = settings.ExpandModifierWin;
+            ExpandKeyComboBox.SelectedItem = settings.ExpandKey.ToString();
 
             _launchApps.Clear();
             foreach (var item in settings.LaunchItems)
@@ -128,6 +136,17 @@ namespace Launcher
                 return;
             }
 
+            var expandHasModifier = (ExpandCtrlCheckBox.IsChecked ?? false)
+                || (ExpandShiftCheckBox.IsChecked ?? false)
+                || (ExpandAltCheckBox.IsChecked ?? false)
+                || (ExpandWinCheckBox.IsChecked ?? false);
+
+            if (!expandHasModifier || ExpandKeyComboBox.SelectedItem is not string expandKeyText)
+            {
+                ExpandValidationMessage.Visibility = Visibility.Visible;
+                return;
+            }
+
             var settings = SettingsService.Load();
             settings.HotKeyModifierCtrl = CtrlCheckBox.IsChecked ?? false;
             settings.HotKeyModifierShift = ShiftCheckBox.IsChecked ?? false;
@@ -135,6 +154,13 @@ namespace Launcher
             settings.HotKeyModifierWin = WinCheckBox.IsChecked ?? false;
             settings.HotKeyKey = keyText[0];
             settings.StartWithWindows = StartupCheckBox.IsChecked ?? false;
+
+            settings.ExpandModifierCtrl = ExpandCtrlCheckBox.IsChecked ?? false;
+            settings.ExpandModifierShift = ExpandShiftCheckBox.IsChecked ?? false;
+            settings.ExpandModifierAlt = ExpandAltCheckBox.IsChecked ?? false;
+            settings.ExpandModifierWin = ExpandWinCheckBox.IsChecked ?? false;
+            settings.ExpandKey = expandKeyText[0];
+
             settings.LaunchItems = new System.Collections.Generic.List<LaunchItem>(_launchApps);
 
             SettingsService.Save(settings);

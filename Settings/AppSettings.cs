@@ -14,6 +14,12 @@ namespace Launcher.Settings
         public char HotKeyKey { get; set; } = 'H';
         public bool StartWithWindows { get; set; }
 
+        public bool ExpandModifierCtrl { get; set; } = true;
+        public bool ExpandModifierShift { get; set; }
+        public bool ExpandModifierAlt { get; set; }
+        public bool ExpandModifierWin { get; set; }
+        public char ExpandKey { get; set; } = 'I';
+
         public int? SettingsWindowX { get; set; }
         public int? SettingsWindowY { get; set; }
         public int? SettingsWindowWidth { get; set; }

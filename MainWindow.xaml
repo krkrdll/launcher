@@ -13,39 +13,70 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid>
-        <GridView
-            x:Name="AppsGridView"
-            Padding="8"
-            SelectionMode="None"
-            IsItemClickEnabled="True"
-            ItemClick="AppsGridView_ItemClick">
-            <GridView.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Width="72" Margin="4" HorizontalAlignment="Center" ToolTipService.ToolTip="{Binding Name}">
-                        <Image Source="{Binding IconSource}" Width="32" Height="32" HorizontalAlignment="Center" Stretch="Uniform" />
-                        <TextBlock
-                            Text="{Binding Name}"
-                            HorizontalAlignment="Center"
-                            TextAlignment="Center"
-                            TextTrimming="CharacterEllipsis"
-                            MaxLines="1"
-                            FontSize="11"
-                            Margin="0,4,0,0" />
-                    </StackPanel>
-                </DataTemplate>
-            </GridView.ItemTemplate>
-        </GridView>
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <TextBlock
-            x:Name="EmptyStateText"
-            Text="設定画面からアプリを登録してください"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Opacity="0.6"
-            TextWrapping="Wrap"
-            TextAlignment="Center"
-            Margin="24"
-            Visibility="Collapsed" />
+        <TextBox
+            Grid.Row="0"
+            x:Name="LaunchTextBox"
+            Margin="8,8,8,8"
+            PlaceholderText="アプリ名を入力"
+            TextChanged="LaunchTextBox_TextChanged"
+            KeyDown="LaunchTextBox_KeyDown" />
+
+        <ListView
+            Grid.Row="1"
+            x:Name="SuggestionsListView"
+            Margin="8,0,8,8"
+            Visibility="Collapsed"
+            SelectionMode="Single"
+            IsItemClickEnabled="True"
+            ItemClick="SuggestionsListView_ItemClick">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" Padding="8,6" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <Grid x:Name="ContentGrid" Grid.Row="2" Visibility="Collapsed">
+            <GridView
+                x:Name="AppsGridView"
+                Padding="8"
+                SelectionMode="None"
+                IsItemClickEnabled="True"
+                ItemClick="AppsGridView_ItemClick">
+                <GridView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Width="72" Margin="4" HorizontalAlignment="Center" ToolTipService.ToolTip="{Binding Name}">
+                            <Image Source="{Binding IconSource}" Width="32" Height="32" HorizontalAlignment="Center" Stretch="Uniform" />
+                            <TextBlock
+                                Text="{Binding Name}"
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"
+                                TextTrimming="CharacterEllipsis"
+                                MaxLines="1"
+                                FontSize="11"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
+
+            <TextBlock
+                x:Name="EmptyStateText"
+                Text="設定画面からアプリを登録してください"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Opacity="0.6"
+                TextWrapping="Wrap"
+                TextAlignment="Center"
+                Margin="24"
+                Visibility="Collapsed" />
+        </Grid>
     </Grid>
 </Window>
