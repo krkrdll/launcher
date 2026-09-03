@@ -16,11 +16,12 @@ namespace Launcher
     /// </summary>
     public sealed partial class SettingsWindow : Window
     {
-        private const int DefaultWidth = 420;
-        private const int DefaultHeight = 620;
+        private const int DefaultWidth = 480;
+        private const int DefaultHeight = 560;
 
         private readonly AppWindow _appWindow;
         private readonly ObservableCollection<LaunchItem> _launchApps = new();
+        private PositionPickerWindow? _positionPickerWindow;
 
         public event Action? SettingsSaved;
 
@@ -88,6 +89,15 @@ namespace Launcher
             ExpandWinCheckBox.IsChecked = settings.ExpandModifierWin;
             ExpandKeyComboBox.SelectedItem = settings.ExpandKey.ToString();
 
+            PositionCursorRadioButton.IsChecked = settings.LauncherPositionMode == LauncherPositionMode.Cursor;
+            PositionFixedRadioButton.IsChecked = settings.LauncherPositionMode == LauncherPositionMode.Fixed;
+            FixedPositionXNumberBox.Value = settings.LauncherFixedPositionX;
+            FixedPositionYNumberBox.Value = settings.LauncherFixedPositionY;
+            UpdateFixedPositionInputsEnabled();
+
+            FontFamilyComboBox.Text = settings.LaunchTextBoxFontFamily;
+            FontSizeNumberBox.Value = settings.LaunchTextBoxFontSize;
+
             _launchApps.Clear();
             foreach (var item in settings.LaunchItems)
             {
@@ -113,6 +123,34 @@ namespace Launcher
 
             var name = System.IO.Path.GetFileNameWithoutExtension(file.Name);
             _launchApps.Add(new LaunchItem { Name = name, Path = file.Path });
+        }
+
+        private void PositionModeRadioButton_Checked(object sender, RoutedEventArgs e) => UpdateFixedPositionInputsEnabled();
+
+        private void UpdateFixedPositionInputsEnabled()
+        {
+            var enabled = PositionFixedRadioButton.IsChecked ?? false;
+            FixedPositionXNumberBox.IsEnabled = enabled;
+            FixedPositionYNumberBox.IsEnabled = enabled;
+            PickPositionButton.IsEnabled = enabled;
+        }
+
+        private void PickPositionButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_positionPickerWindow is not null)
+            {
+                return;
+            }
+
+            _positionPickerWindow = new PositionPickerWindow();
+            _positionPickerWindow.PositionPicked += OnPositionPicked;
+            _positionPickerWindow.Closed += (_, _) => _positionPickerWindow = null;
+        }
+
+        private void OnPositionPicked(PointInt32 position)
+        {
+            FixedPositionXNumberBox.Value = position.X;
+            FixedPositionYNumberBox.Value = position.Y;
         }
 
         private void RemoveAppButton_Click(object sender, RoutedEventArgs e)
@@ -160,6 +198,24 @@ namespace Launcher
             settings.ExpandModifierAlt = ExpandAltCheckBox.IsChecked ?? false;
             settings.ExpandModifierWin = ExpandWinCheckBox.IsChecked ?? false;
             settings.ExpandKey = expandKeyText[0];
+
+            settings.LauncherPositionMode = (PositionFixedRadioButton.IsChecked ?? false)
+                ? LauncherPositionMode.Fixed
+                : LauncherPositionMode.Cursor;
+
+            if (!double.IsNaN(FixedPositionXNumberBox.Value))
+            {
+                settings.LauncherFixedPositionX = (int)FixedPositionXNumberBox.Value;
+            }
+
+            if (!double.IsNaN(FixedPositionYNumberBox.Value))
+            {
+                settings.LauncherFixedPositionY = (int)FixedPositionYNumberBox.Value;
+            }
+
+            var fontFamily = FontFamilyComboBox.Text?.Trim();
+            settings.LaunchTextBoxFontFamily = string.IsNullOrEmpty(fontFamily) ? new AppSettings().LaunchTextBoxFontFamily : fontFamily;
+            settings.LaunchTextBoxFontSize = double.IsNaN(FontSizeNumberBox.Value) ? new AppSettings().LaunchTextBoxFontSize : FontSizeNumberBox.Value;
 
             settings.LaunchItems = new System.Collections.Generic.List<LaunchItem>(_launchApps);
 

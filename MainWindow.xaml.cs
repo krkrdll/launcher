@@ -3,6 +3,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Launcher.Interop;
 using Launcher.Settings;
@@ -22,7 +23,8 @@ using WinRT.Interop;
 namespace Launcher
 {
     /// <summary>
-    /// Resides in the system tray; the configured global hotkey shows the window at the current mouse position.
+    /// Resides in the system tray; the configured global hotkey shows the window at the current mouse position
+    /// or a fixed screen position, depending on the configured display mode.
     /// </summary>
     public sealed partial class MainWindow : Window
     {
@@ -33,8 +35,8 @@ namespace Launcher
         private const int MenuIdSettings = 2;
         private const int MenuIdExit = 3;
 
-        private const int WindowWidth = 400;
-        private const int CollapsedHeight = 64;
+        internal const int WindowWidth = 400;
+        internal const int CollapsedHeight = 64;
         private const int ExpandedHeight = 230;
         private const int SuggestionsHeight = 200;
 
@@ -70,6 +72,7 @@ namespace Launcher
 
             AppsGridView.ItemsSource = _launchItems;
             LoadLaunchItems();
+            ApplyLaunchTextBoxFont();
 
             Activated += OnActivated;
         }
@@ -99,6 +102,14 @@ namespace Launcher
         /// Hides the window so only the tray icon remains. Call once, right after the first Activate.
         /// </summary>
         public void HideToTray() => _appWindow.Hide();
+
+        private void ApplyLaunchTextBoxFont() => ApplyLaunchTextBoxFont(SettingsService.Load());
+
+        private void ApplyLaunchTextBoxFont(AppSettings settings)
+        {
+            LaunchTextBox.FontFamily = new FontFamily(settings.LaunchTextBoxFontFamily);
+            LaunchTextBox.FontSize = settings.LaunchTextBoxFontSize;
+        }
 
         private void RegisterGlobalHotKey() => RegisterGlobalHotKey(SettingsService.Load());
 
@@ -232,7 +243,7 @@ namespace Launcher
             return icon != IntPtr.Zero ? icon : NativeMethods.LoadIcon(IntPtr.Zero, NativeMethods.IDI_APPLICATION);
         }
 
-        private void ToggleAtCursorPosition()
+        private void ToggleLauncherWindow()
         {
             if (_appWindow.IsVisible)
             {
@@ -240,13 +251,15 @@ namespace Launcher
             }
             else
             {
-                ShowAtCursorPosition();
+                ShowLauncherWindow();
             }
         }
 
-        private void ShowAtCursorPosition()
+        private void ShowLauncherWindow()
         {
-            if (!NativeMethods.GetCursorPos(out var cursor))
+            var size = new SizeInt32(WindowWidth, CollapsedHeight);
+            var position = ComputeShowPosition(SettingsService.Load(), size);
+            if (position is null)
             {
                 return;
             }
@@ -257,21 +270,36 @@ namespace Launcher
             SuggestionsListView.Visibility = Visibility.Collapsed;
             SuggestionsListView.ItemsSource = null;
 
-            var point = new PointInt32(cursor.X, cursor.Y);
-            var displayArea = DisplayArea.GetFromPoint(point, DisplayAreaFallback.Nearest);
-            var workArea = displayArea.WorkArea;
-            var size = new SizeInt32(WindowWidth, CollapsedHeight);
-
-            var x = ClampPosition(cursor.X, workArea.X, workArea.X + workArea.Width - size.Width);
-            var y = ClampPosition(cursor.Y, workArea.Y, workArea.Y + workArea.Height - size.Height);
-
             _appWindow.Resize(size);
-            _appWindow.Move(new PointInt32(x, y));
+            _appWindow.Move(position.Value);
             _appWindow.Show();
             NativeMethods.SetForegroundWindow(_hWnd);
 
             LaunchTextBox.Text = string.Empty;
             LaunchTextBox.Focus(FocusState.Programmatic);
+        }
+
+        private static PointInt32? ComputeShowPosition(AppSettings settings, SizeInt32 size)
+        {
+            if (settings.LauncherPositionMode == LauncherPositionMode.Fixed)
+            {
+                var workArea = DisplayArea.Primary.WorkArea;
+                var fixedX = ClampPosition(settings.LauncherFixedPositionX, workArea.X, workArea.X + workArea.Width - size.Width);
+                var fixedY = ClampPosition(settings.LauncherFixedPositionY, workArea.Y, workArea.Y + workArea.Height - size.Height);
+                return new PointInt32(fixedX, fixedY);
+            }
+
+            if (!NativeMethods.GetCursorPos(out var cursor))
+            {
+                return null;
+            }
+
+            var displayArea = DisplayArea.GetFromPoint(new PointInt32(cursor.X, cursor.Y), DisplayAreaFallback.Nearest);
+            var cursorWorkArea = displayArea.WorkArea;
+
+            var x = ClampPosition(cursor.X, cursorWorkArea.X, cursorWorkArea.X + cursorWorkArea.Width - size.Width);
+            var y = ClampPosition(cursor.Y, cursorWorkArea.Y, cursorWorkArea.Y + cursorWorkArea.Height - size.Height);
+            return new PointInt32(x, y);
         }
 
         private static int ClampPosition(int value, int min, int max) => max <= min ? min : Math.Clamp(value, min, max);
@@ -460,7 +488,7 @@ namespace Launcher
                 switch (command)
                 {
                     case MenuIdShow:
-                        ShowAtCursorPosition();
+                        ShowLauncherWindow();
                         break;
                     case MenuIdSettings:
                         OpenSettingsWindow();
@@ -491,6 +519,7 @@ namespace Launcher
                 RegisterGlobalHotKey(settings);
                 RegisterExpandShortcut(settings);
                 LoadLaunchItems();
+                ApplyLaunchTextBoxFont(settings);
             };
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
             _settingsWindow.Activate();
@@ -523,7 +552,7 @@ namespace Launcher
                 case NativeMethods.WM_HOTKEY:
                     if (wParam.ToInt32() == HotKeyId)
                     {
-                        DispatcherQueue.TryEnqueue(ToggleAtCursorPosition);
+                        DispatcherQueue.TryEnqueue(ToggleLauncherWindow);
                         return IntPtr.Zero;
                     }
                     break;
@@ -532,7 +561,7 @@ namespace Launcher
                     var mouseMessage = (uint)lParam.ToInt32();
                     if (mouseMessage == NativeMethods.WM_LBUTTONUP)
                     {
-                        DispatcherQueue.TryEnqueue(ShowAtCursorPosition);
+                        DispatcherQueue.TryEnqueue(ShowLauncherWindow);
                     }
                     else if (mouseMessage == NativeMethods.WM_RBUTTONUP || mouseMessage == NativeMethods.WM_CONTEXTMENU)
                     {

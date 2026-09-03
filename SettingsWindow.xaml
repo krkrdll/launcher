@@ -13,115 +13,191 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid Padding="24" RowSpacing="16">
+    <Grid Padding="24,24,24,16" RowSpacing="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Spacing="8">
-            <TextBlock Text="グローバルホットキー" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <TextBlock
-                Text="ランチャーウィンドウを現在のマウス位置に表示するショートカットキーです。"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Opacity="0.7"
-                TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <CheckBox x:Name="CtrlCheckBox" Content="Ctrl" />
-                <CheckBox x:Name="ShiftCheckBox" Content="Shift" />
-                <CheckBox x:Name="AltCheckBox" Content="Alt" />
-                <CheckBox x:Name="WinCheckBox" Content="Win" />
-                <ComboBox x:Name="KeyComboBox" Width="88" />
-            </StackPanel>
-        </StackPanel>
-
-        <TextBlock
-            Grid.Row="1"
-            x:Name="ValidationMessage"
-            Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
-            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-            TextWrapping="Wrap"
-            Visibility="Collapsed" />
-
-        <StackPanel Grid.Row="2" Spacing="8">
-            <TextBlock Text="起動" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <CheckBox x:Name="StartupCheckBox" Content="Windows起動時に自動的に起動する" />
-        </StackPanel>
-
-        <StackPanel Grid.Row="3" Spacing="8">
-            <TextBlock Text="アイコン一覧の展開ショートカット" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <TextBlock
-                Text="ランチャーウィンドウ表示中にこのキーを押すと、登録アプリのアイコン一覧を表示・非表示します。"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Opacity="0.7"
-                TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <CheckBox x:Name="ExpandCtrlCheckBox" Content="Ctrl" />
-                <CheckBox x:Name="ExpandShiftCheckBox" Content="Shift" />
-                <CheckBox x:Name="ExpandAltCheckBox" Content="Alt" />
-                <CheckBox x:Name="ExpandWinCheckBox" Content="Win" />
-                <ComboBox x:Name="ExpandKeyComboBox" Width="88" />
-            </StackPanel>
-        </StackPanel>
-
-        <TextBlock
-            Grid.Row="4"
-            x:Name="ExpandValidationMessage"
-            Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
-            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-            TextWrapping="Wrap"
-            Visibility="Collapsed" />
-
-        <Grid Grid.Row="5" RowSpacing="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Row="0" ColumnSpacing="8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="登録アプリケーション" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
-                <Button Grid.Column="1" x:Name="AddAppButton" Content="追加" Click="AddAppButton_Click" />
-            </Grid>
-
-            <ListView Grid.Row="1" x:Name="AppsListView" SelectionMode="None">
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Padding="0,4" ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Spacing="2">
-                                <TextBox Text="{Binding Name, Mode=TwoWay}" PlaceholderText="表示名" />
-                                <TextBlock
-                                    Text="{Binding Path}"
-                                    Opacity="0.6"
-                                    FontSize="11"
-                                    TextTrimming="CharacterEllipsis"
-                                    ToolTipService.ToolTip="{Binding Path}" />
+        <Pivot Grid.Row="0">
+            <PivotItem Header="ショートカット">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="24" Margin="0,16,0,0">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="グローバルホットキー" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock
+                                Text="ランチャーウィンドウの表示・非表示を切り替えるショートカットキーです。"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Opacity="0.7"
+                                TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <CheckBox x:Name="CtrlCheckBox" Content="Ctrl" />
+                                <CheckBox x:Name="ShiftCheckBox" Content="Shift" />
+                                <CheckBox x:Name="AltCheckBox" Content="Alt" />
+                                <CheckBox x:Name="WinCheckBox" Content="Win" />
+                                <ComboBox x:Name="KeyComboBox" Width="88" />
                             </StackPanel>
-                            <Button
-                                Grid.Column="1"
-                                Content="削除"
-                                VerticalAlignment="Center"
-                                Click="RemoveAppButton_Click"
-                                Tag="{Binding}" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
+                            <TextBlock
+                                x:Name="ValidationMessage"
+                                Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                TextWrapping="Wrap"
+                                Visibility="Collapsed" />
+                        </StackPanel>
 
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="アイコン一覧の展開ショートカット" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock
+                                Text="ランチャーウィンドウ表示中にこのキーを押すと、登録アプリのアイコン一覧を表示・非表示します。"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Opacity="0.7"
+                                TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <CheckBox x:Name="ExpandCtrlCheckBox" Content="Ctrl" />
+                                <CheckBox x:Name="ExpandShiftCheckBox" Content="Shift" />
+                                <CheckBox x:Name="ExpandAltCheckBox" Content="Alt" />
+                                <CheckBox x:Name="ExpandWinCheckBox" Content="Win" />
+                                <ComboBox x:Name="ExpandKeyComboBox" Width="88" />
+                            </StackPanel>
+                            <TextBlock
+                                x:Name="ExpandValidationMessage"
+                                Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                TextWrapping="Wrap"
+                                Visibility="Collapsed" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <PivotItem Header="表示">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="24" Margin="0,16,0,0">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="表示位置" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <TextBlock
+                                Text="ランチャーウィンドウを表示する位置を選択します。固定位置は画面左上を基準にした座標（ピクセル）で指定します。「座標を指定」を押すとプレビューがマウスに追従するので、配置したい位置でクリックしてください（右クリックでキャンセル）。"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Opacity="0.7"
+                                TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <RadioButton
+                                    x:Name="PositionCursorRadioButton"
+                                    Content="マウスカーソル位置に表示"
+                                    GroupName="PositionMode"
+                                    Checked="PositionModeRadioButton_Checked" />
+                                <RadioButton
+                                    x:Name="PositionFixedRadioButton"
+                                    Content="固定位置に表示"
+                                    GroupName="PositionMode"
+                                    Checked="PositionModeRadioButton_Checked" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <NumberBox
+                                    x:Name="FixedPositionXNumberBox"
+                                    Width="110"
+                                    Header="X座標"
+                                    SpinButtonPlacementMode="Inline"
+                                    SmallChange="10" />
+                                <NumberBox
+                                    x:Name="FixedPositionYNumberBox"
+                                    Width="110"
+                                    Header="Y座標"
+                                    SpinButtonPlacementMode="Inline"
+                                    SmallChange="10" />
+                                <Button
+                                    x:Name="PickPositionButton"
+                                    Content="座標を指定"
+                                    VerticalAlignment="Bottom"
+                                    Click="PickPositionButton_Click" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="ランチャーのテキストボックスのフォント" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <ComboBox
+                                    x:Name="FontFamilyComboBox"
+                                    Width="200"
+                                    IsEditable="True"
+                                    PlaceholderText="フォントファミリー">
+                                    <x:String>Segoe UI Variable</x:String>
+                                    <x:String>Segoe UI</x:String>
+                                    <x:String>Yu Gothic UI</x:String>
+                                    <x:String>Meiryo UI</x:String>
+                                    <x:String>MS UI Gothic</x:String>
+                                    <x:String>Consolas</x:String>
+                                    <x:String>Arial</x:String>
+                                </ComboBox>
+                                <NumberBox
+                                    x:Name="FontSizeNumberBox"
+                                    Width="96"
+                                    Header="サイズ"
+                                    Minimum="8"
+                                    Maximum="72"
+                                    SmallChange="1"
+                                    SpinButtonPlacementMode="Inline" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+
+            <PivotItem Header="起動">
+                <StackPanel Spacing="8" Margin="0,16,0,0">
+                    <TextBlock Text="起動" Style="{StaticResource SubtitleTextBlockStyle}" />
+                    <CheckBox x:Name="StartupCheckBox" Content="Windows起動時に自動的に起動する" />
+                </StackPanel>
+            </PivotItem>
+
+            <PivotItem Header="登録アプリ">
+                <Grid RowSpacing="8" Margin="0,16,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="登録アプリケーション" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Name="AddAppButton" Content="追加" Click="AddAppButton_Click" />
+                    </Grid>
+
+                    <ListView Grid.Row="1" x:Name="AppsListView" SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="0,4" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2">
+                                        <TextBox Text="{Binding Name, Mode=TwoWay}" PlaceholderText="表示名" />
+                                        <TextBlock
+                                            Text="{Binding Path}"
+                                            Opacity="0.6"
+                                            FontSize="11"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTipService.ToolTip="{Binding Path}" />
+                                    </StackPanel>
+                                    <Button
+                                        Grid.Column="1"
+                                        Content="削除"
+                                        VerticalAlignment="Center"
+                                        Click="RemoveAppButton_Click"
+                                        Tag="{Binding}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </PivotItem>
+        </Pivot>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
             <Button x:Name="CancelButton" Content="キャンセル" Click="CancelButton_Click" />
             <Button x:Name="SaveButton" Content="保存" Style="{StaticResource AccentButtonStyle}" Click="SaveButton_Click" />
         </StackPanel>
