@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Launcher.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Launcher"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="設定">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Spacing="8">
+            <TextBlock Text="グローバルホットキー" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock
+                Text="ランチャーウィンドウを現在のマウス位置に表示するショートカットキーです。"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Opacity="0.7"
+                TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <CheckBox x:Name="CtrlCheckBox" Content="Ctrl" />
+                <CheckBox x:Name="ShiftCheckBox" Content="Shift" />
+                <CheckBox x:Name="AltCheckBox" Content="Alt" />
+                <CheckBox x:Name="WinCheckBox" Content="Win" />
+                <ComboBox x:Name="KeyComboBox" Width="88" />
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            Grid.Row="1"
+            x:Name="ValidationMessage"
+            Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            TextWrapping="Wrap"
+            Visibility="Collapsed" />
+
+        <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock Text="起動" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <CheckBox x:Name="StartupCheckBox" Content="Windows起動時に自動的に起動する" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="CancelButton" Content="キャンセル" Click="CancelButton_Click" />
+            <Button x:Name="SaveButton" Content="保存" Style="{StaticResource AccentButtonStyle}" Click="SaveButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

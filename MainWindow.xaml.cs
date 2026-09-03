@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Launcher.Interop;
+using Launcher.Settings;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -14,16 +15,16 @@ using WinRT.Interop;
 namespace Launcher
 {
     /// <summary>
-    /// Resides in the system tray; Win+Alt+H shows the window at the current mouse position.
+    /// Resides in the system tray; the configured global hotkey shows the window at the current mouse position.
     /// </summary>
     public sealed partial class MainWindow : Window
     {
         private const int HotKeyId = 1;
-        private const uint VirtualKeyH = 0x48;
         private const uint WM_TRAYICON = NativeMethods.WM_APP + 1;
         private const uint TrayIconId = 1;
         private const int MenuIdShow = 1;
-        private const int MenuIdExit = 2;
+        private const int MenuIdSettings = 2;
+        private const int MenuIdExit = 3;
 
         private readonly IntPtr _hWnd;
         private readonly AppWindow _appWindow;
@@ -31,6 +32,7 @@ namespace Launcher
         private IntPtr _previousWndProc;
         private NativeMethods.NOTIFYICONDATA _trayIconData;
         private IntPtr _trayIconHandle;
+        private SettingsWindow? _settingsWindow;
 
         public MainWindow()
         {
@@ -76,17 +78,23 @@ namespace Launcher
         /// </summary>
         public void HideToTray() => _appWindow.Hide();
 
-        private void RegisterGlobalHotKey()
-        {
-            var registered = NativeMethods.RegisterHotKey(
-                _hWnd,
-                HotKeyId,
-                NativeMethods.MOD_WIN | NativeMethods.MOD_ALT | NativeMethods.MOD_NOREPEAT,
-                VirtualKeyH);
+        private void RegisterGlobalHotKey() => RegisterGlobalHotKey(SettingsService.Load());
 
+        private void RegisterGlobalHotKey(AppSettings settings)
+        {
+            NativeMethods.UnregisterHotKey(_hWnd, HotKeyId);
+
+            var modifiers = NativeMethods.MOD_NOREPEAT;
+            if (settings.HotKeyModifierCtrl) modifiers |= NativeMethods.MOD_CONTROL;
+            if (settings.HotKeyModifierShift) modifiers |= NativeMethods.MOD_SHIFT;
+            if (settings.HotKeyModifierAlt) modifiers |= NativeMethods.MOD_ALT;
+            if (settings.HotKeyModifierWin) modifiers |= NativeMethods.MOD_WIN;
+            var virtualKey = (uint)char.ToUpperInvariant(settings.HotKeyKey);
+
+            var registered = NativeMethods.RegisterHotKey(_hWnd, HotKeyId, modifiers, virtualKey);
             if (!registered)
             {
-                Debug.WriteLine("Failed to register global hotkey Win+Alt+H. It may already be in use.");
+                Debug.WriteLine("Failed to register global hotkey. It may already be in use.");
             }
         }
 
@@ -150,6 +158,7 @@ namespace Launcher
             try
             {
                 NativeMethods.AppendMenu(hMenu, NativeMethods.MF_STRING, (UIntPtr)MenuIdShow, "表示");
+                NativeMethods.AppendMenu(hMenu, NativeMethods.MF_STRING, (UIntPtr)MenuIdSettings, "設定");
                 NativeMethods.AppendMenu(hMenu, NativeMethods.MF_STRING, (UIntPtr)MenuIdExit, "終了");
 
                 NativeMethods.GetCursorPos(out var cursor);
@@ -168,6 +177,9 @@ namespace Launcher
                     case MenuIdShow:
                         ShowAtCursorPosition();
                         break;
+                    case MenuIdSettings:
+                        OpenSettingsWindow();
+                        break;
                     case MenuIdExit:
                         ExitApplication();
                         break;
@@ -177,6 +189,20 @@ namespace Launcher
             {
                 NativeMethods.DestroyMenu(hMenu);
             }
+        }
+
+        private void OpenSettingsWindow()
+        {
+            if (_settingsWindow is not null)
+            {
+                _settingsWindow.Activate();
+                return;
+            }
+
+            _settingsWindow = new SettingsWindow();
+            _settingsWindow.SettingsSaved += () => RegisterGlobalHotKey(SettingsService.Load());
+            _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+            _settingsWindow.Activate();
         }
 
         private void ExitApplication()
