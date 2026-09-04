@@ -133,15 +133,7 @@
                                     x:Name="FontFamilyComboBox"
                                     Width="300"
                                     IsEditable="True"
-                                    PlaceholderText="フォントファミリー">
-                                    <x:String>Segoe UI Variable</x:String>
-                                    <x:String>Segoe UI</x:String>
-                                    <x:String>Yu Gothic UI</x:String>
-                                    <x:String>Meiryo UI</x:String>
-                                    <x:String>MS UI Gothic</x:String>
-                                    <x:String>Consolas</x:String>
-                                    <x:String>Arial</x:String>
-                                </ComboBox>
+                                    PlaceholderText="フォントファミリー" />
                                 <NumberBox
                                     x:Name="FontSizeNumberBox"
                                     Width="128"

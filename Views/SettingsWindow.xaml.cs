@@ -39,7 +39,13 @@ namespace Launcher
             AppsListView.ItemsSource = _launchApps;
             PopulateKeyOptions(KeyComboBox);
             PopulateKeyOptions(ExpandKeyComboBox);
+            PopulateFontFamilies();
             LoadSettings(settings);
+
+            // IsEditable な ComboBox は、ItemsSource から候補一覧(ポップアップ)が生成されるより前に
+            // Text を設定すると編集用テキストボックスの表示に反映されないことがある。
+            // レイアウトが一巡した後まで再設定を遅延させることで確実に表示させる。
+            DispatcherQueue.TryEnqueue(() => FontFamilyComboBox.Text = settings.LaunchTextBoxFontFamily);
 
             Closed += (_, _) => SaveWindowGeometry();
         }
@@ -72,6 +78,11 @@ namespace Launcher
             {
                 comboBox.Items.Add(key.ToString());
             }
+        }
+
+        private void PopulateFontFamilies()
+        {
+            FontFamilyComboBox.ItemsSource = InstalledFontProvider.GetFontFamilyNames();
         }
 
         private void LoadSettings(AppSettings settings)
