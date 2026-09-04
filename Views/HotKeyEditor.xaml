@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Launcher.HotKeyEditor"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Launcher"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Spacing="8">
+        <TextBlock x:Name="TitleTextBlock" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <TextBlock
+            x:Name="DescriptionTextBlock"
+            Style="{StaticResource CaptionTextBlockStyle}"
+            Opacity="0.7"
+            TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="4">
+            <CheckBox x:Name="CtrlCheckBox" Content="Ctrl" />
+            <CheckBox x:Name="ShiftCheckBox" Content="Shift" />
+            <CheckBox x:Name="AltCheckBox" Content="Alt" />
+            <CheckBox x:Name="WinCheckBox" Content="Win" />
+            <ComboBox x:Name="KeyComboBox" Width="88" />
+        </StackPanel>
+        <TextBlock
+            x:Name="ValidationMessage"
+            Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            TextWrapping="Wrap"
+            Visibility="Collapsed" />
+    </StackPanel>
+</UserControl>

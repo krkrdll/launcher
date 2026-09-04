@@ -138,12 +138,8 @@ namespace Launcher
         {
             NativeMethods.UnregisterHotKey(_hWnd, HotKeyId);
 
-            var modifiers = NativeMethods.MOD_NOREPEAT;
-            if (settings.HotKeyModifierCtrl) modifiers |= NativeMethods.MOD_CONTROL;
-            if (settings.HotKeyModifierShift) modifiers |= NativeMethods.MOD_SHIFT;
-            if (settings.HotKeyModifierAlt) modifiers |= NativeMethods.MOD_ALT;
-            if (settings.HotKeyModifierWin) modifiers |= NativeMethods.MOD_WIN;
-            var virtualKey = (uint)char.ToUpperInvariant(settings.HotKeyKey);
+            var modifiers = settings.ToggleWindowHotKey.ToWin32Modifiers(noRepeat: true);
+            var virtualKey = settings.ToggleWindowHotKey.ToWin32VirtualKey();
 
             var registered = NativeMethods.RegisterHotKey(_hWnd, HotKeyId, modifiers, virtualKey);
             if (!registered)
@@ -161,16 +157,12 @@ namespace Launcher
                 RootGrid.KeyboardAccelerators.Remove(_expandAccelerator);
             }
 
-            if (!Enum.TryParse<VirtualKey>(settings.ExpandKey.ToString(), out var virtualKey))
+            if (!Enum.TryParse<VirtualKey>(settings.ExpandIconsHotKey.Key.ToString(), out var virtualKey))
             {
                 return;
             }
 
-            var modifiers = VirtualKeyModifiers.None;
-            if (settings.ExpandModifierCtrl) modifiers |= VirtualKeyModifiers.Control;
-            if (settings.ExpandModifierShift) modifiers |= VirtualKeyModifiers.Shift;
-            if (settings.ExpandModifierAlt) modifiers |= VirtualKeyModifiers.Menu;
-            if (settings.ExpandModifierWin) modifiers |= VirtualKeyModifiers.Windows;
+            var modifiers = settings.ExpandIconsHotKey.ToVirtualKeyModifiers();
 
             _expandAccelerator = new KeyboardAccelerator { Key = virtualKey, Modifiers = modifiers };
             _expandAccelerator.Invoked += ExpandAccelerator_Invoked;

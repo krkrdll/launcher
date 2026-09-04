@@ -37,8 +37,6 @@ namespace Launcher
             ApplyWindowGeometry(settings);
 
             AppsListView.ItemsSource = _launchApps;
-            PopulateKeyOptions(KeyComboBox);
-            PopulateKeyOptions(ExpandKeyComboBox);
             PopulateFontFamilies();
             LoadSettings(settings);
 
@@ -72,14 +70,6 @@ namespace Launcher
             SettingsService.Save(settings);
         }
 
-        private static void PopulateKeyOptions(ComboBox comboBox)
-        {
-            for (var key = 'A'; key <= 'Z'; key++)
-            {
-                comboBox.Items.Add(key.ToString());
-            }
-        }
-
         private void PopulateFontFamilies()
         {
             FontFamilyComboBox.ItemsSource = InstalledFontProvider.GetFontFamilyNames();
@@ -87,18 +77,10 @@ namespace Launcher
 
         private void LoadSettings(AppSettings settings)
         {
-            CtrlCheckBox.IsChecked = settings.HotKeyModifierCtrl;
-            ShiftCheckBox.IsChecked = settings.HotKeyModifierShift;
-            AltCheckBox.IsChecked = settings.HotKeyModifierAlt;
-            WinCheckBox.IsChecked = settings.HotKeyModifierWin;
-            KeyComboBox.SelectedItem = settings.HotKeyKey.ToString();
+            ToggleWindowHotKeyEditor.SetHotKey(settings.ToggleWindowHotKey);
             StartupCheckBox.IsChecked = StartupManager.IsEnabled();
 
-            ExpandCtrlCheckBox.IsChecked = settings.ExpandModifierCtrl;
-            ExpandShiftCheckBox.IsChecked = settings.ExpandModifierShift;
-            ExpandAltCheckBox.IsChecked = settings.ExpandModifierAlt;
-            ExpandWinCheckBox.IsChecked = settings.ExpandModifierWin;
-            ExpandKeyComboBox.SelectedItem = settings.ExpandKey.ToString();
+            ExpandIconsHotKeyEditor.SetHotKey(settings.ExpandIconsHotKey);
 
             PositionCursorRadioButton.IsChecked = settings.LauncherPositionMode == LauncherPositionMode.Cursor;
             PositionFixedRadioButton.IsChecked = settings.LauncherPositionMode == LauncherPositionMode.Fixed;
@@ -174,41 +156,21 @@ namespace Launcher
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            var hasModifier = (CtrlCheckBox.IsChecked ?? false)
-                || (ShiftCheckBox.IsChecked ?? false)
-                || (AltCheckBox.IsChecked ?? false)
-                || (WinCheckBox.IsChecked ?? false);
-
-            if (!hasModifier || KeyComboBox.SelectedItem is not string keyText)
+            if (!ToggleWindowHotKeyEditor.TryGetHotKey(out var toggleWindowHotKey))
             {
-                ValidationMessage.Visibility = Visibility.Visible;
                 return;
             }
 
-            var expandHasModifier = (ExpandCtrlCheckBox.IsChecked ?? false)
-                || (ExpandShiftCheckBox.IsChecked ?? false)
-                || (ExpandAltCheckBox.IsChecked ?? false)
-                || (ExpandWinCheckBox.IsChecked ?? false);
-
-            if (!expandHasModifier || ExpandKeyComboBox.SelectedItem is not string expandKeyText)
+            if (!ExpandIconsHotKeyEditor.TryGetHotKey(out var expandIconsHotKey))
             {
-                ExpandValidationMessage.Visibility = Visibility.Visible;
                 return;
             }
 
             var settings = SettingsService.Load();
-            settings.HotKeyModifierCtrl = CtrlCheckBox.IsChecked ?? false;
-            settings.HotKeyModifierShift = ShiftCheckBox.IsChecked ?? false;
-            settings.HotKeyModifierAlt = AltCheckBox.IsChecked ?? false;
-            settings.HotKeyModifierWin = WinCheckBox.IsChecked ?? false;
-            settings.HotKeyKey = keyText[0];
+            settings.ToggleWindowHotKey = toggleWindowHotKey;
             settings.StartWithWindows = StartupCheckBox.IsChecked ?? false;
 
-            settings.ExpandModifierCtrl = ExpandCtrlCheckBox.IsChecked ?? false;
-            settings.ExpandModifierShift = ExpandShiftCheckBox.IsChecked ?? false;
-            settings.ExpandModifierAlt = ExpandAltCheckBox.IsChecked ?? false;
-            settings.ExpandModifierWin = ExpandWinCheckBox.IsChecked ?? false;
-            settings.ExpandKey = expandKeyText[0];
+            settings.ExpandIconsHotKey = expandIconsHotKey;
 
             settings.LauncherPositionMode = (PositionFixedRadioButton.IsChecked ?? false)
                 ? LauncherPositionMode.Fixed

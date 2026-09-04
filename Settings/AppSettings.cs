@@ -13,18 +13,10 @@ namespace Launcher.Settings
     /// </summary>
     public sealed class AppSettings
     {
-        public bool HotKeyModifierCtrl { get; set; }
-        public bool HotKeyModifierShift { get; set; }
-        public bool HotKeyModifierAlt { get; set; } = true;
-        public bool HotKeyModifierWin { get; set; } = true;
-        public char HotKeyKey { get; set; } = 'H';
+        public HotKeyDefinition ToggleWindowHotKey { get; set; } = new() { ModifierAlt = true, ModifierWin = true, Key = 'H' };
         public bool StartWithWindows { get; set; }
 
-        public bool ExpandModifierCtrl { get; set; } = true;
-        public bool ExpandModifierShift { get; set; }
-        public bool ExpandModifierAlt { get; set; }
-        public bool ExpandModifierWin { get; set; }
-        public char ExpandKey { get; set; } = 'I';
+        public HotKeyDefinition ExpandIconsHotKey { get; set; } = new() { ModifierCtrl = true, Key = 'I' };
 
         public int? SettingsWindowX { get; set; }
         public int? SettingsWindowY { get; set; }

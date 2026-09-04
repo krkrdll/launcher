@@ -38,49 +38,15 @@
             <Grid Margin="16,0,0,0">
                 <ScrollViewer x:Name="ShortcutsPanel" VerticalScrollBarVisibility="Auto" Visibility="Visible">
                     <StackPanel Spacing="24" Margin="0,16,0,0">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="グローバルホットキー" Style="{StaticResource SubtitleTextBlockStyle}" />
-                            <TextBlock
-                                Text="ランチャーウィンドウの表示・非表示を切り替えるショートカットキーです。"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Opacity="0.7"
-                                TextWrapping="Wrap" />
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <CheckBox x:Name="CtrlCheckBox" Content="Ctrl" />
-                                <CheckBox x:Name="ShiftCheckBox" Content="Shift" />
-                                <CheckBox x:Name="AltCheckBox" Content="Alt" />
-                                <CheckBox x:Name="WinCheckBox" Content="Win" />
-                                <ComboBox x:Name="KeyComboBox" Width="88" />
-                            </StackPanel>
-                            <TextBlock
-                                x:Name="ValidationMessage"
-                                Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
-                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                TextWrapping="Wrap"
-                                Visibility="Collapsed" />
-                        </StackPanel>
+                        <local:HotKeyEditor
+                            x:Name="ToggleWindowHotKeyEditor"
+                            Title="グローバルホットキー"
+                            Description="ランチャーウィンドウの表示・非表示を切り替えるショートカットキーです。" />
 
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="アイコン一覧の展開ショートカット" Style="{StaticResource SubtitleTextBlockStyle}" />
-                            <TextBlock
-                                Text="ランチャーウィンドウ表示中にこのキーを押すと、登録アプリのアイコン一覧を表示・非表示します。"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Opacity="0.7"
-                                TextWrapping="Wrap" />
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <CheckBox x:Name="ExpandCtrlCheckBox" Content="Ctrl" />
-                                <CheckBox x:Name="ExpandShiftCheckBox" Content="Shift" />
-                                <CheckBox x:Name="ExpandAltCheckBox" Content="Alt" />
-                                <CheckBox x:Name="ExpandWinCheckBox" Content="Win" />
-                                <ComboBox x:Name="ExpandKeyComboBox" Width="88" />
-                            </StackPanel>
-                            <TextBlock
-                                x:Name="ExpandValidationMessage"
-                                Text="少なくとも1つの修飾キー（Ctrl / Shift / Alt / Win）を選択してください。"
-                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                TextWrapping="Wrap"
-                                Visibility="Collapsed" />
-                        </StackPanel>
+                        <local:HotKeyEditor
+                            x:Name="ExpandIconsHotKeyEditor"
+                            Title="アイコン一覧の展開ショートカット"
+                            Description="ランチャーウィンドウ表示中にこのキーを押すと、登録アプリのアイコン一覧を表示・非表示します。" />
                     </StackPanel>
                 </ScrollViewer>
 
