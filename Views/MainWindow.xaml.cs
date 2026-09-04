@@ -35,8 +35,8 @@ namespace Launcher
         private const int MenuIdSettings = 2;
         private const int MenuIdExit = 3;
 
-        internal const int WindowWidth = 400;
-        internal const int CollapsedHeight = 64;
+        internal const int WindowWidth = 600;
+        internal const int DefaultCollapsedHeight = 64;
         private const int ExpandedHeight = 230;
         private const int SuggestionsHeight = 200;
 
@@ -52,6 +52,7 @@ namespace Launcher
         private KeyboardAccelerator? _expandAccelerator;
         private bool _isExpanded;
         private bool _isShowingSuggestions;
+        private int _collapsedHeight = DefaultCollapsedHeight;
 
         public MainWindow()
         {
@@ -73,13 +74,15 @@ namespace Launcher
             AppsGridView.ItemsSource = _launchItems;
             LoadLaunchItems();
             ApplyLaunchTextBoxFont();
+            LaunchTextBox.Loaded += (_, _) => UpdateCollapsedHeight();
+            UpdateCollapsedHeight();
 
             Activated += OnActivated;
         }
 
         private void ConfigureWindowChrome()
         {
-            _appWindow.Resize(new SizeInt32(WindowWidth, CollapsedHeight));
+            _appWindow.Resize(new SizeInt32(WindowWidth, _collapsedHeight));
 
             if (_appWindow.Presenter is OverlappedPresenter presenter)
             {
@@ -109,6 +112,24 @@ namespace Launcher
         {
             LaunchTextBox.FontFamily = new FontFamily(settings.LaunchTextBoxFontFamily);
             LaunchTextBox.FontSize = settings.LaunchTextBoxFontSize;
+        }
+
+        /// <summary>
+        /// Recomputes the collapsed window height from the text box's actual desired size,
+        /// so a larger font doesn't get clipped by a fixed window height.
+        /// </summary>
+        private void UpdateCollapsedHeight()
+        {
+            LaunchTextBox.Measure(new Windows.Foundation.Size(WindowWidth, double.PositiveInfinity));
+            var desiredHeight = LaunchTextBox.DesiredSize.Height;
+            if (desiredHeight <= 0)
+            {
+                return;
+            }
+
+            var verticalMargin = LaunchTextBox.Margin.Top + LaunchTextBox.Margin.Bottom;
+            _collapsedHeight = Math.Max(DefaultCollapsedHeight, (int)Math.Ceiling(desiredHeight + verticalMargin));
+            ResizeToCurrentState();
         }
 
         private void RegisterGlobalHotKey() => RegisterGlobalHotKey(SettingsService.Load());
@@ -196,10 +217,10 @@ namespace Launcher
         {
             if (_isShowingSuggestions)
             {
-                return CollapsedHeight + SuggestionsHeight;
+                return _collapsedHeight + SuggestionsHeight;
             }
 
-            return _isExpanded ? ExpandedHeight : CollapsedHeight;
+            return _isExpanded ? ExpandedHeight + (_collapsedHeight - DefaultCollapsedHeight) : _collapsedHeight;
         }
 
         private void ResizeToCurrentState()
@@ -257,7 +278,7 @@ namespace Launcher
 
         private void ShowLauncherWindow()
         {
-            var size = new SizeInt32(WindowWidth, CollapsedHeight);
+            var size = new SizeInt32(WindowWidth, _collapsedHeight);
             var position = ComputeShowPosition(SettingsService.Load(), size);
             if (position is null)
             {
@@ -520,6 +541,7 @@ namespace Launcher
                 RegisterExpandShortcut(settings);
                 LoadLaunchItems();
                 ApplyLaunchTextBoxFont(settings);
+                UpdateCollapsedHeight();
             };
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
             _settingsWindow.Activate();

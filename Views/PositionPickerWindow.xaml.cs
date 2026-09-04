@@ -42,7 +42,7 @@ namespace Launcher
                 presenter.IsMinimizable = false;
             }
 
-            appWindow.Resize(new SizeInt32(MainWindow.WindowWidth, MainWindow.CollapsedHeight));
+            appWindow.Resize(new SizeInt32(MainWindow.WindowWidth, MainWindow.DefaultCollapsedHeight));
 
             _hookProc = HookProc;
             _hookHandle = NativeMethods.SetWindowsHookEx(
@@ -97,7 +97,7 @@ namespace Launcher
             var workArea = displayArea.WorkArea;
 
             var x = Math.Clamp(cursorX, workArea.X, Math.Max(workArea.X, workArea.X + workArea.Width - MainWindow.WindowWidth));
-            var y = Math.Clamp(cursorY, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - MainWindow.CollapsedHeight));
+            var y = Math.Clamp(cursorY, workArea.Y, Math.Max(workArea.Y, workArea.Y + workArea.Height - MainWindow.DefaultCollapsedHeight));
             return (x, y);
         }
 
