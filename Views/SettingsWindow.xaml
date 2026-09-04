@@ -131,7 +131,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="12">
                                 <ComboBox
                                     x:Name="FontFamilyComboBox"
-                                    Width="200"
+                                    Width="300"
                                     IsEditable="True"
                                     PlaceholderText="フォントファミリー">
                                     <x:String>Segoe UI Variable</x:String>
@@ -144,8 +144,7 @@
                                 </ComboBox>
                                 <NumberBox
                                     x:Name="FontSizeNumberBox"
-                                    Width="96"
-                                    Header="サイズ"
+                                    Width="128"
                                     Minimum="8"
                                     Maximum="72"
                                     SmallChange="1"
@@ -178,17 +177,28 @@
                     <ListView Grid.Row="1" x:Name="AppsListView" SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Padding="0,4" ColumnSpacing="8">
+                                <Grid Padding="0,8" ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2">
-                                        <TextBox Text="{Binding Name, Mode=TwoWay}" PlaceholderText="表示名" />
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{Binding Name, Mode=TwoWay}" PlaceholderText="表示名" />
+                                            <TextBox
+                                                Grid.Column="1"
+                                                Text="{Binding Arguments, Mode=TwoWay}"
+                                                PlaceholderText="引数（任意）"
+                                                FontSize="11" />
+                                        </Grid>
                                         <TextBlock
                                             Text="{Binding Path}"
-                                            Opacity="0.6"
-                                            FontSize="11"
+                                            Opacity="0.8"
+                                            FontSize="12"
                                             TextTrimming="CharacterEllipsis"
                                             ToolTipService.ToolTip="{Binding Path}" />
                                     </StackPanel>

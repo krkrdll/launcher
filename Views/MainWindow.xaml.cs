@@ -332,7 +332,7 @@ namespace Launcher
 
             foreach (var item in settings.LaunchItems)
             {
-                var view = new LaunchItemView { Name = item.Name, Path = item.Path };
+                var view = new LaunchItemView { Name = item.Name, Path = item.Path, Arguments = item.Arguments };
                 if (_iconCache.TryGetValue(item.Path, out var cachedIcon))
                 {
                     view.IconSource = cachedIcon;
@@ -364,8 +364,26 @@ namespace Launcher
         {
             if (e.ClickedItem is LaunchItemView item)
             {
-                LaunchApp(item.Path);
+                LaunchApp(item.Path, item.Arguments);
             }
+        }
+
+        /// <summary>
+        /// Splits launcher text into the app-name portion used for suggestion matching and
+        /// the remainder (if any), which is treated as command-line arguments to pass to the app.
+        /// </summary>
+        private static (string Name, string? Arguments) SplitNameAndArguments(string text)
+        {
+            var trimmed = text.TrimStart();
+            var spaceIndex = trimmed.IndexOfAny(new[] { ' ', '\t' });
+            if (spaceIndex < 0)
+            {
+                return (trimmed, null);
+            }
+
+            var name = trimmed[..spaceIndex];
+            var arguments = trimmed[(spaceIndex + 1)..].Trim();
+            return (name, arguments.Length == 0 ? null : arguments);
         }
 
         private void LaunchTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -377,8 +395,15 @@ namespace Launcher
                 return;
             }
 
+            var (namePart, _) = SplitNameAndArguments(text);
+            if (string.IsNullOrEmpty(namePart))
+            {
+                SetSuggestions(null);
+                return;
+            }
+
             var suggestions = _launchItems
-                .Where(item => item.Name.StartsWith(text, StringComparison.OrdinalIgnoreCase))
+                .Where(item => item.Name.StartsWith(namePart, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             SetSuggestions(suggestions);
@@ -441,15 +466,17 @@ namespace Launcher
 
         private void LaunchHighlightedOrSingleSuggestion()
         {
+            var (_, typedArguments) = SplitNameAndArguments(LaunchTextBox.Text);
+
             if (SuggestionsListView.SelectedItem is LaunchItemView selected)
             {
-                LaunchSelection(selected);
+                LaunchSelection(selected, typedArguments);
                 return;
             }
 
             if (SuggestionsListView.ItemsSource is IReadOnlyCollection<LaunchItemView> { Count: 1 } suggestions)
             {
-                LaunchSelection(suggestions.Single());
+                LaunchSelection(suggestions.Single(), typedArguments);
             }
         }
 
@@ -457,21 +484,28 @@ namespace Launcher
         {
             if (e.ClickedItem is LaunchItemView item)
             {
-                LaunchSelection(item);
+                var (_, typedArguments) = SplitNameAndArguments(LaunchTextBox.Text);
+                LaunchSelection(item, typedArguments);
             }
         }
 
-        private void LaunchSelection(LaunchItemView item)
+        private void LaunchSelection(LaunchItemView item, string? typedArguments = null)
         {
             LaunchTextBox.Text = string.Empty;
-            LaunchApp(item.Path);
+            LaunchApp(item.Path, string.IsNullOrEmpty(typedArguments) ? item.Arguments : typedArguments);
         }
 
-        private void LaunchApp(string path)
+        private void LaunchApp(string path, string? arguments)
         {
             try
             {
-                Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+                var startInfo = new ProcessStartInfo(path) { UseShellExecute = true };
+                if (!string.IsNullOrWhiteSpace(arguments))
+                {
+                    startInfo.Arguments = arguments;
+                }
+
+                Process.Start(startInfo);
             }
             catch (Exception ex)
             {
