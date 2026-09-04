@@ -19,9 +19,24 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Pivot Grid.Row="0">
-            <PivotItem Header="ショートカット">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <NavigationView
+            Grid.Row="0"
+            x:Name="SettingsNavigationView"
+            PaneDisplayMode="Left"
+            OpenPaneLength="200"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="False"
+            IsPaneToggleButtonVisible="False"
+            SelectionChanged="SettingsNavigationView_SelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem Content="ショートカット" Tag="Shortcuts" IsSelected="True" />
+                <NavigationViewItem Content="表示" Tag="Display" />
+                <NavigationViewItem Content="起動" Tag="Startup" />
+                <NavigationViewItem Content="登録アプリ" Tag="Apps" />
+            </NavigationView.MenuItems>
+
+            <Grid Margin="16,0,0,0">
+                <ScrollViewer x:Name="ShortcutsPanel" VerticalScrollBarVisibility="Auto" Visibility="Visible">
                     <StackPanel Spacing="24" Margin="0,16,0,0">
                         <StackPanel Spacing="8">
                             <TextBlock Text="グローバルホットキー" Style="{StaticResource SubtitleTextBlockStyle}" />
@@ -68,10 +83,8 @@
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
-            </PivotItem>
 
-            <PivotItem Header="表示">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer x:Name="DisplayPanel" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
                     <StackPanel Spacing="24" Margin="0,16,0,0">
                         <StackPanel Spacing="8">
                             <TextBlock Text="表示位置" Style="{StaticResource SubtitleTextBlockStyle}" />
@@ -141,17 +154,13 @@
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
-            </PivotItem>
 
-            <PivotItem Header="起動">
-                <StackPanel Spacing="8" Margin="0,16,0,0">
+                <StackPanel x:Name="StartupPanel" Spacing="8" Margin="0,16,0,0" Visibility="Collapsed">
                     <TextBlock Text="起動" Style="{StaticResource SubtitleTextBlockStyle}" />
                     <CheckBox x:Name="StartupCheckBox" Content="Windows起動時に自動的に起動する" />
                 </StackPanel>
-            </PivotItem>
 
-            <PivotItem Header="登録アプリ">
-                <Grid RowSpacing="8" Margin="0,16,0,0">
+                <Grid x:Name="AppsPanel" RowSpacing="8" Margin="0,16,0,0" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -194,8 +203,8 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
-            </PivotItem>
-        </Pivot>
+            </Grid>
+        </NavigationView>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
             <Button x:Name="CancelButton" Content="キャンセル" Click="CancelButton_Click" />

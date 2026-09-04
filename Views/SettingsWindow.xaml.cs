@@ -16,7 +16,7 @@ namespace Launcher
     /// </summary>
     public sealed partial class SettingsWindow : Window
     {
-        private const int DefaultWidth = 480;
+        private const int DefaultWidth = 680;
         private const int DefaultHeight = 560;
 
         private readonly AppWindow _appWindow;
@@ -227,5 +227,15 @@ namespace Launcher
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void SettingsNavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+        {
+            var tag = (args.SelectedItemContainer as NavigationViewItem)?.Tag as string;
+
+            ShortcutsPanel.Visibility = tag == "Shortcuts" ? Visibility.Visible : Visibility.Collapsed;
+            DisplayPanel.Visibility = tag == "Display" ? Visibility.Visible : Visibility.Collapsed;
+            StartupPanel.Visibility = tag == "Startup" ? Visibility.Visible : Visibility.Collapsed;
+            AppsPanel.Visibility = tag == "Apps" ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 }
